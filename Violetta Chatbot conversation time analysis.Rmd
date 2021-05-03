@@ -1,0 +1,101 @@
+---
+title: "Violetta Chatbot conversation time analisys"
+author: "John Hernandez"
+output: html_notebook
+---
+
+## Installing and reading libraries
+```{r}
+install.packages("stringr")
+install.packages("chron")
+```
+
+```{r}
+library("purrr")
+library("stringr")
+library(chron)
+
+```
+
+## Reading and cleaning the data
+
+Lets first read the data from the csv called conversation_messages.
+
+```{r}
+#Set the current working directory to the Violetta folder
+
+setwd("J:/DATA SCIENCE/Omdena/Official Folder of Violetta_ Building NLP for Psychological Violence")
+
+#Reading the csv file related to the chatbot_conversation
+data <- read.csv("conversation_messages.csv")
+```
+
+We want to work only with the create time column and the conversation id. We will reverse the order of the rows so we can have the conversation from the oldest to the newest.
+
+```{r}
+data_t <- data[,-c(1,3,4)]
+data_t <- data_t%>%map_df(rev)
+data_t$created_time <- paste0(substring(data_t$created_time,12,19))
+data_t$created_time <- chron(times. = data_t$created_time)
+```
+
+Lets create a dataframe with the conversations id, starting time and ending time.
+
+```{r}
+conv_number <- 1
+conv_time <-data.frame(id = character(0), start_t = numeric(0), end_t = numeric(0),  place=character(0))
+
+
+for (i in 2:160568){
+  if(data_t$conversation_id[i]!=data_t$conversation_id[i-1]){
+    conv_time[conv_number,1]<-data_t$conversation_id[(i-1)]
+    conv_time$end_t[conv_number]<-data_t$created_time[i-1]
+    conv_time$place[conv_number]<- i
+    conv_number<-conv_number+1
+  }
+}
+conv_time$place<- as.integer(conv_time$place)
+conv_time$start_t[1]<-data_t$created_time[1]
+for(i in 2:(conv_number-1)){
+  conv_time$start_t[i]<-data_t$created_time[conv_time$place[i-1]]
+}
+conv_time$start_t <- chron(times. = conv_time$start_t)
+conv_time$end_t <- chron(times. = conv_time$end_t)
+
+conv_time <- conv_time[,-4]
+```
+
+## Timee analysis
+Now lets create another column to analyze the time spent in each conversation.
+
+```{r}
+conv_time$spent_time <- conv_time$end_t-conv_time$start_t
+```
+
+We can calculate the min, max, and average amount of time that an user stay chatting with Violetta.
+
+```{r}
+average_conv_time <- mean(conv_time$spent_time)
+min_conv_time <- min(conv_time$spent_time)
+max_conv_time <- max(conv_time$spent_time)
+
+hours(average_conv_time)
+hours(min_conv_time)
+hours(max_conv_time)
+
+minutes(average_conv_time)
+minutes(min_conv_time)
+minutes(max_conv_time)
+
+seconds(average_conv_time)
+seconds(min_conv_time)
+seconds(max_conv_time)
+
+sprintf("The average time that an user spend chatting with Violetta is %i hours, %i minutes, and %i seconds.", hours(average_conv_time), minutes(average_conv_time), seconds(average_conv_time))
+
+sprintf("The maximum time that an user has spent chatting with Violetta is %i hours, %i minutes, and %i seconds.", hours(max_conv_time), minutes(max_conv_time), seconds(max_conv_time))
+
+sprintf("The minimum time that an user has spent chatting with Violetta is 2 seconds.")
+```
+
+
