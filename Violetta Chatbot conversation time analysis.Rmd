@@ -65,12 +65,20 @@ conv_time$end_t <- chron(times. = conv_time$end_t)
 conv_time <- conv_time[,-4]
 ```
 
-## Timee analysis
+
+
+## Time analysis
 Now lets create another column to analyze the time spent in each conversation.
 
 ```{r}
 conv_time$spent_time <- conv_time$end_t-conv_time$start_t
 ```
+
+## Exporting as csv
+```{r}
+write.csv(conv_time,"J:/DATA SCIENCE/Omdena/Official Folder of Violetta_ Building NLP for Psychological Violence\\Violetta conversation Time.csv", row.names = FALSE)
+```
+
 
 We can calculate the min, max, and average amount of time that an user stay chatting with Violetta.
 
